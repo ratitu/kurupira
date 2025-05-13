@@ -1,0 +1,25 @@
+{
+  "name": "radio-hotsite",
+  "version": "1.0.0",
+  "description": "A hotsite to expose a new radio software solution for isolated and endangered communities.",
+  "main": "src/index.html",
+  "scripts": {
+    "start": "live-server src",
+    "build": "echo 'Build script not defined yet'"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.0",
+    "sass": "^1.88.0"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.1"
+  },
+  "keywords": [
+    "radio",
+    "software",
+    "community",
+    "endangered"
+  ],
+  "author": "Matheus Thibau Paulino - Rhizomatica",
+  "license": "MIT"
+}
