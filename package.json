@@ -8,11 +8,8 @@
     "build": "echo 'Build script not defined yet'"
   },
   "dependencies": {
-    "bootstrap": "^5.3.0",
-    "sass": "^1.88.0"
   },
   "devDependencies": {
-    "live-server": "^1.2.1"
   },
   "keywords": [
     "radio",
