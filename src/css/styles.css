@@ -8,6 +8,7 @@ body {
     background-color: #f8f9fa;
     margin: 0;
     padding: 0;
+    overflow-x: hidden;
 }
 
 .header {
@@ -18,7 +19,7 @@ body {
 }
 
 .container {
-    max-width: 800px;
+    max-width: 75%;
     margin: 20px auto;
     padding: 20px;
     background-color: white;
@@ -36,15 +37,15 @@ p {
 }
 
 .btn-primary {
-    background-color: #667a58;
+    background-color: #fa6b37;
     border: none;
 }
 
 .btn-primary:hover {
-    background-color: #667a58;
+    background-color: #f7845a;
 }
 
-.footer {
+footer {
     text-align: center;
     padding: 10px;
     background-color: #667a58;
@@ -54,22 +55,52 @@ p {
     width: 100%;
 }
 
+a {
+    color: #fff !important;
+    font-weight: bold !important;
+    text-decoration: none;
+}
+
+a:hover,
+a:focus {
+    color: #293122 !important;
+    text-decoration: underline;
+}
+
 nav {
     background-color: #667a58;
 
-    a{
-        color: #fff                                                                              ;
-        font-weight: bold;
-        
-        .disabled{
+    a {
+        color: #fff !important;
+        font-weight: bold !important;
+
+        .disabled {
             color: aqua;
             pointer-events: none;
         }
     }
 
-    a:hover, a:focus {
+    a:hover,
+    a:focus {
         color: #fa6b37;
         text-decoration: underline;
     }
 
+}
+
+.bg-dark {
+    background-color: #667a58 !important;
+    color: white;
+}
+
+.icon {
+    width: 30px;
+    -webkit-filter: invert(100%);
+    filter: invert(100%);
+}
+
+.icon-sm {
+    width: 20px;
+    -webkit-filter: invert(100%);
+    filter: invert(100%);
 }
