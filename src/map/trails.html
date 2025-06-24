@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mata Santa Genebra Trails</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIINfQPDQwrADkHdAVtGRdmo4ChfrfFl3Gw="
+        crossorigin=""/>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Leaflet map and panels */
+        body {
+            font-family: 'Inter', sans-serif; /* Using Inter font as per instructions */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f4f7f6;
+        }
+        #map {
+            flex-grow: 1; /* Map takes available space */
+            height: 60vh; /* Default height for the map */
+            border-radius: 0.75rem; /* rounded-xl */
+            overflow: hidden; /* Ensure content respects border-radius */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
+        }
+        .panel {
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
+        }
+        /* Ensure Leaflet attribution is readable */
+        .leaflet-control-attribution a {
+            color: #4a5568 !important; /* text-gray-700 */
+        }
+        /* Style for GPX tracks */
+        .gpx-track {
+            stroke: #3B82F6; /* blue-500 */
+            stroke-width: 4;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="p-4 bg-gray-100 flex flex-col lg:flex-row lg:space-x-4 min-h-screen">
+
+    <div class="flex-grow flex flex-col space-y-4 lg:w-3/4">
+        <h1 class="text-3xl font-bold text-gray-800 text-center mb-4">Mata Santa Genebra Trails</h1>
+        <div id="map" class="w-full"></div>
+    </div>
+
+    <div class="flex flex-col space-y-4 mt-4 lg:mt-0 lg:w-1/4">
+        <!-- Trail Control Panel -->
+        <div class="panel p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Trails</h2>
+            <div id="trail-controls" class="space-y-3">
+                <!-- Checkboxes will be inserted here by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Description Panel -->
+        <div class="panel p-6 flex-grow">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Trail Description</h2>
+            <div id="trail-description" class="text-gray-700 leading-relaxed overflow-y-auto max-h-96">
+                <p>Welcome to the Mata Santa Genebra Trails map! Use the checkboxes above to toggle the visibility of different trails.</p>
+                <p class="mt-2">This area is a beautiful natural reserve, offering various routes for hiking and exploring. Each trail provides a unique experience of the local flora and fauna.</p>
+                <p class="mt-2">Select a trail to learn more about its length, difficulty, and points of interest here.</p>
+                <!-- Placeholder for dynamic description -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjGwYSPwOjK30sEK6raRvPywXfd/cWLf5bbuBJOYrLbtgUFZg=="
+        crossorigin=""></script>
+    <!-- leaflet-gpx plugin -->
+    <script src="https://unpkg.com/leaflet-gpx/gpx/gpx.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the map
+            // Coordinates for Mata Santa Genebra, Campinas, Brazil: -22.8465, -47.0673
+            const map = L.map('map').setView([-22.8465, -47.0673], 14);
+
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Define your trails with placeholder Google Drive direct download links
+            // IMPORTANT: Replace 'YOUR_FILE_ID_X' with your actual Google Drive file IDs
+            // Make sure these files are publicly shared with "Anyone with the link" and you've generated direct download URLs like:
+            // https://drive.google.com/uc?export=download&id=YOUR_FILE_ID_X
+            const trails = [
+                {
+                    id: 'trail1',
+                    name: 'Trilha Principal',
+                    gpxUrl: 'https://drive.google.com/file/d/1O-89bp9G7uSokh25P97DWU59imXfTauH/view?usp=drive_link', // REPLACE THIS
+                    description: 'This is the main trail, well-maintained and suitable for all skill levels. It offers a scenic walk through the heart of the reserve.',
+                    color: '#3B82F6', // Blue
+                    visible: true // Initially visible
+                },
+                {
+                    id: 'trail2',
+                    name: 'Trilha da Cachoeira',
+                    gpxUrl: 'https://drive.google.com/uc?export=download&id=YOUR_FILE_ID_2', // REPLACE THIS
+                    description: 'A more challenging trail leading to a small waterfall. Be prepared for some uneven terrain and inclines. Great for nature lovers.',
+                    color: '#10B981', // Green
+                    visible: false // Initially hidden
+                },
+                {
+                    id: 'trail3',
+                    name: 'Trilha do Mirante',
+                    gpxUrl: 'https://drive.google.com/uc?export=download&id=YOUR_FILE_ID_3', // REPLACE THIS
+                    description: 'This trail offers stunning panoramic views from a high point. It\'s a moderate climb but the views are well worth the effort.',
+                    color: '#F59E0B', // Amber
+                    visible: false // Initially hidden
+                },
+                {
+                    id: 'trail4',
+                    name: 'Trilha Curta',
+                    gpxUrl: 'https://drive.google.com/uc?export=download&id=YOUR_FILE_ID_4', // REPLACE THIS
+                    description: 'A short and easy loop, perfect for a quick stroll or for families with young children. Enjoy the calm forest environment.',
+                    color: '#EF4444', // Red
+                    visible: true // Initially visible
+                }
+            ];
+
+            const gpxLayers = {}; // To store Leaflet GPX layers
+            const trailControlsDiv = document.getElementById('trail-controls');
+            const trailDescriptionDiv = document.getElementById('trail-description');
+
+            // Function to update the description panel
+            function updateDescription(description) {
+                trailDescriptionDiv.innerHTML = `<p>${description}</p>`;
+            }
+
+            // Load and display trails
+            trails.forEach(trail => {
+                // Create checkbox for each trail
+                const checkboxContainer = document.createElement('div');
+                checkboxContainer.className = 'flex items-center space-x-2';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `checkbox-${trail.id}`;
+                checkbox.className = 'form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500 transition duration-150 ease-in-out';
+                checkbox.checked = trail.visible; // Set initial checked state
+
+                const label = document.createElement('label');
+                label.htmlFor = `checkbox-${trail.id}`;
+                label.className = 'text-gray-700 cursor-pointer flex-grow';
+                label.textContent = trail.name;
+
+                checkboxContainer.appendChild(checkbox);
+                checkboxContainer.appendChild(label);
+                trailControlsDiv.appendChild(checkboxContainer);
+
+                // Initialize GPX layer for each trail
+                // GPX parsing is asynchronous, so we handle it here
+                const gpxLayer = new L.GPX(trail.gpxUrl, {
+                    async: true,
+                    marker_options: {
+                        startIconUrl: '', // No start marker
+                        endIconUrl: '',   // No end marker
+                        shadowUrl: '',    // No shadow
+                    },
+                    polyline_options: {
+                        color: trail.color,
+                        opacity: 0.75,
+                        weight: 4,
+                        lineCap: 'round'
+                    }
+                });
+
+                gpxLayer.on('loaded', function(e) {
+                    // Fit map to GPX bounds if this is the first visible trail loaded
+                    // Or if no other trails are currently visible
+                    if (trail.visible && Object.keys(gpxLayers).every(key => !map.hasLayer(gpxLayers[key]))) {
+                        map.fitBounds(e.target.getBounds());
+                    }
+                    // Add to map if initially visible
+                    if (trail.visible) {
+                        gpxLayer.addTo(map);
+                    }
+                });
+
+                // Add click event listener to GPX layer to show description
+                gpxLayer.on('click', function() {
+                    updateDescription(trail.description);
+                });
+
+                gpxLayers[trail.id] = gpxLayer; // Store the layer
+
+                // Add event listener to checkbox to toggle visibility
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        gpxLayers[trail.id].addTo(map);
+                        updateDescription(trail.description); // Update description when trail is enabled
+                    } else {
+                        map.removeLayer(gpxLayers[trail.id]);
+                        // If all trails are disabled, clear the description or show a default message
+                        if (Object.values(gpxLayers).every(layer => !map.hasLayer(layer))) {
+                            trailDescriptionDiv.innerHTML = '<p>Select a trail from the list above to view its description.</p>';
+                        }
+                    }
+                });
+            });
+
+            // Initial description load for any visible trails
+            const initiallyVisibleTrail = trails.find(t => t.visible);
+            if (initiallyVisibleTrail) {
+                updateDescription(initiallyVisibleTrail.description);
+            } else {
+                 trailDescriptionDiv.innerHTML = '<p>Select a trail from the list above to view its description.</p>';
+            }
+
+            // Ensure the map resizes correctly on window resize
+            window.addEventListener('resize', function() {
+                map.invalidateSize();
+            });
+        });
+    </script>
+</body>
+</html>
+

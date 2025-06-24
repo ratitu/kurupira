@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet GPX File Viewer</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""/>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom Styles -->
+    <style>
+        /* Ensure the map container has a defined height */
+        #map {
+            height: 100vh;
+        }
+        /* Custom scrollbar for the control panel */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="overflow-hidden">
+
+    <div class="flex h-screen">
+        <!-- Control Panel Sidebar -->
+        <aside class="w-full md:w-1/3 lg:w-1/4 xl:w-1/5 bg-white shadow-lg p-6 flex flex-col">
+            <header class="pb-4 border-b">
+                <h1 class="text-2xl font-bold text-gray-800">GPX Viewer</h1>
+                <p class="text-sm text-gray-500">Upload GPX files and toggle their visibility.</p>
+            </header>
+            
+            <!-- File Uploader -->
+            <div class="my-6">
+                <label for="gpx-upload" class="block mb-2 text-sm font-medium text-gray-700">Upload Files</label>
+                <input type="file" id="gpx-upload" multiple accept=".gpx"
+                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4
+                              file:rounded-full file:border-0 file:text-sm file:font-semibold
+                              file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100
+                              cursor-pointer"/>
+            </div>
+
+            <!-- Layer Controls -->
+            <div class="flex-grow overflow-y-auto custom-scrollbar">
+                <h2 class="text-lg font-semibold text-gray-700 mb-2">Layers</h2>
+                <div id="controls" class="space-y-3">
+                    <p id="no-layers-message" class="text-gray-500 text-sm">No layers uploaded yet.</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Map Container -->
+        <main class="flex-grow">
+            <div id="map"></div>
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+    
+    <!-- Leaflet-GPX Plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // 1. Initialize the map
+            const map = L.map('map').setView([45.5, -122.6], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            const fileInput = document.getElementById('gpx-upload');
+            const controlsContainer = document.getElementById('controls');
+            const noLayersMessage = document.getElementById('no-layers-message');
+            
+            // This object will store references to the Leaflet layers
+            const gpxLayers = {};
+
+            // 2. Handle file uploads
+            fileInput.addEventListener('change', function (event) {
+                const files = event.target.files;
+                if (!files.length) return;
+
+                // Hide the initial message once files are uploaded
+                if (noLayersMessage) {
+                    noLayersMessage.style.display = 'none';
+                }
+
+                for (const file of files) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function (e) {
+                        const gpxData = e.target.result;
+                        const layerName = file.name.replace('.gpx', '');
+
+                        // Avoid adding duplicate layers
+                        if (gpxLayers[layerName]) {
+                           console.warn(`Layer "${layerName}" already exists.`);
+                           return;
+                        }
+
+                        // 3. Create and add GPX layer to the map
+                        const gpxLayer = new L.GPX(gpxData, {
+                            async: true,
+                            marker_options: {
+                                startIconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/pin-icon-start.png',
+                                endIconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/pin-icon-end.png',
+                                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/pin-shadow.png'
+                            }
+                        }).on('loaded', function(e) {
+                            // Zoom the map to the track
+                            map.fitBounds(e.target.getBounds());
+                        }).addTo(map);
+                        
+                        // Store the layer
+                        gpxLayers[layerName] = gpxLayer;
+
+                        // 4. Create a control for the new layer
+                        createLayerControl(layerName);
+                    };
+
+                    reader.readAsText(file);
+                }
+                
+                // Clear the input value to allow re-uploading the same file
+                fileInput.value = '';
+            });
+
+            // 5. Function to create a toggle switch for a layer
+            function createLayerControl(name) {
+                const controlId = `control-${name.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                
+                const controlWrapper = document.createElement('div');
+                controlWrapper.className = 'flex items-center justify-between bg-gray-50 p-2 rounded-lg';
+                
+                const label = document.createElement('label');
+                label.htmlFor = controlId;
+                label.textContent = name;
+                label.className = 'text-sm font-medium text-gray-800 flex-grow mr-2 truncate';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = controlId;
+                checkbox.checked = true;
+                checkbox.className = 'h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500 cursor-pointer';
+
+                checkbox.addEventListener('change', function () {
+                    if (this.checked) {
+                        map.addLayer(gpxLayers[name]);
+                    } else {
+                        map.removeLayer(gpxLayers[name]);
+                    }
+                });
+
+                controlWrapper.appendChild(label);
+                controlWrapper.appendChild(checkbox);
+                controlsContainer.appendChild(controlWrapper);
+            }
+        });
+    </script>
+</body>
+</html>
+
