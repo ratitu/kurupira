@@ -54,7 +54,7 @@ footer {
     text-align: center;
     padding: 10px;
     background-color: #667a58;
-    color: white;
+    color: rgb(243, 227, 227);
     position: relative;
     bottom: 0;
     width: 100%;
@@ -62,7 +62,7 @@ footer {
 }
 
 a {
-    color: #fff !important;
+    color: #f70a0a !important;
     font-weight: bold !important;
     text-decoration: none;
 }
